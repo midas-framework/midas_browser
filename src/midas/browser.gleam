@@ -4,10 +4,9 @@ import gleam/io
 import gleam/javascript/promise
 import gleam/string
 import gleam/uri
+import midas/browser/zip
 import midas/task as t
 import plinth/browser/window
-
-// import spotless/repl/capabilities/zip
 
 // can't be part of main midas reliance on node stuff. would need to be sub package
 pub fn run(task) {
@@ -27,10 +26,10 @@ pub fn run(task) {
       io.println(message)
       run(resume(Ok(Nil)))
     }
-    // t.Zip(files, resume) -> {
-    //   use zipped <- promise.await(zip.zip(files))
-    //   run(resume(Ok(zipped)))
-    // }
+    t.Zip(files, resume) -> {
+      use zipped <- promise.await(zip.zip(files))
+      run(resume(Ok(zipped)))
+    }
     _ -> {
       io.debug(task)
       panic as "unsupported effect in run"

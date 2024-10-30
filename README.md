@@ -4,8 +4,10 @@
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/midas_browser/)
 
 ```sh
+npm install --save @zip.js/zip.js
 gleam add midas_browser@1
 ```
+
 ```gleam
 import midas_browser
 
