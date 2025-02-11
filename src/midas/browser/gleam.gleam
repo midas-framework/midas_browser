@@ -47,7 +47,7 @@ fn do_take_warnings(project, acc) {
 
 pub fn take_warnings(project) {
   do_take_warnings(project, [])
-  |> list.map(string.trim_left(_))
+  |> list.map(string.trim_start(_))
 }
 
 @external(javascript, "../../midas_browser_gleam_ffi.mjs", "run")
