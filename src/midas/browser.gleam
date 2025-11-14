@@ -30,10 +30,20 @@ pub fn run(task) {
       use zipped <- promise.await(zip.zip(files))
       run(resume(Ok(zipped)))
     }
-    _ -> {
-      io.debug(task)
-      panic as "unsupported effect in run"
-    }
+    t.Bundle(..) -> panic as { "Unsupported effect: " <> "Bundle" }
+    t.ExportJsonWebKey(..) ->
+      panic as { "Unsupported effect: " <> "ExportJsonWebKey" }
+    t.GenerateKeyPair(..) ->
+      panic as { "Unsupported effect: " <> "GenerateKeyPair" }
+    t.Hash(..) -> panic as { "Unsupported effect: " <> "Hash" }
+    t.List(..) -> panic as { "Unsupported effect: " <> "List" }
+    t.Read(..) -> panic as { "Unsupported effect: " <> "Read" }
+    t.Serve(..) -> panic as { "Unsupported effect: " <> "Serve" }
+    t.Sign(..) -> panic as { "Unsupported effect: " <> "Sign" }
+    t.StrongRandom(..) -> panic as { "Unsupported effect: " <> "StrongRandom" }
+    t.UnixNow(..) -> panic as { "Unsupported effect: " <> "UnixNow" }
+    t.Visit(..) -> panic as { "Unsupported effect: " <> "Visit" }
+    t.Write(..) -> panic as { "Unsupported effect: " <> "Write" }
   }
 }
 
