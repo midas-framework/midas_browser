@@ -5,45 +5,43 @@ import gleam/javascript/promise
 import gleam/string
 import gleam/uri
 import midas/browser/zip
-import midas/task as t
+import midas/effect as e
 import plinth/browser/window
 
 // can't be part of main midas reliance on node stuff. would need to be sub package
 pub fn run(task) {
   case task {
-    t.Done(value) -> promise.resolve(Ok(value))
-    t.Abort(reason) -> promise.resolve(Error(reason))
-
-    t.Fetch(request, resume) -> {
+    e.Done(value) -> promise.resolve(value)
+    e.Fetch(request, resume) -> {
       use return <- promise.await(do_fetch(request))
       run(resume(return))
     }
-    t.Follow(url, resume) -> {
+    e.Follow(url, resume) -> {
       use return <- promise.await(do_follow(url))
       run(resume(uri.parse(return)))
     }
-    t.Log(message, resume) -> {
+    e.Log(message, resume) -> {
       io.println(message)
       run(resume(Ok(Nil)))
     }
-    t.Zip(files, resume) -> {
+    e.Zip(files, resume) -> {
       use zipped <- promise.await(zip.zip(files))
       run(resume(Ok(zipped)))
     }
-    t.Bundle(..) -> panic as { "Unsupported effect: " <> "Bundle" }
-    t.ExportJsonWebKey(..) ->
+    e.Bundle(..) -> panic as { "Unsupported effect: " <> "Bundle" }
+    e.ExportJsonWebKey(..) ->
       panic as { "Unsupported effect: " <> "ExportJsonWebKey" }
-    t.GenerateKeyPair(..) ->
+    e.GenerateKeyPair(..) ->
       panic as { "Unsupported effect: " <> "GenerateKeyPair" }
-    t.Hash(..) -> panic as { "Unsupported effect: " <> "Hash" }
-    t.List(..) -> panic as { "Unsupported effect: " <> "List" }
-    t.Read(..) -> panic as { "Unsupported effect: " <> "Read" }
-    t.Serve(..) -> panic as { "Unsupported effect: " <> "Serve" }
-    t.Sign(..) -> panic as { "Unsupported effect: " <> "Sign" }
-    t.StrongRandom(..) -> panic as { "Unsupported effect: " <> "StrongRandom" }
-    t.UnixNow(..) -> panic as { "Unsupported effect: " <> "UnixNow" }
-    t.Visit(..) -> panic as { "Unsupported effect: " <> "Visit" }
-    t.Write(..) -> panic as { "Unsupported effect: " <> "Write" }
+    e.Hash(..) -> panic as { "Unsupported effect: " <> "Hash" }
+    e.List(..) -> panic as { "Unsupported effect: " <> "List" }
+    e.Read(..) -> panic as { "Unsupported effect: " <> "Read" }
+    e.Serve(..) -> panic as { "Unsupported effect: " <> "Serve" }
+    e.Sign(..) -> panic as { "Unsupported effect: " <> "Sign" }
+    e.StrongRandom(..) -> panic as { "Unsupported effect: " <> "StrongRandom" }
+    e.UnixNow(..) -> panic as { "Unsupported effect: " <> "UnixNow" }
+    e.Visit(..) -> panic as { "Unsupported effect: " <> "Visit" }
+    e.Write(..) -> panic as { "Unsupported effect: " <> "Write" }
   }
 }
 
@@ -54,19 +52,20 @@ pub fn do_fetch(request) {
       use response <- promise.await(fetch.read_bytes_body(response))
       let response = case response {
         Ok(response) -> Ok(response)
-        Error(fetch.NetworkError(s)) -> Error(t.NetworkError(s))
-        Error(fetch.UnableToReadBody) -> Error(t.UnableToReadBody)
+        Error(fetch.NetworkError(s)) -> Error(e.NetworkError(s))
+        Error(fetch.UnableToReadBody) -> Error(e.UnableToReadBody)
         Error(fetch.InvalidJsonBody) -> panic
       }
       promise.resolve(response)
     }
-    Error(fetch.NetworkError(s)) -> promise.resolve(Error(t.NetworkError(s)))
-    Error(fetch.UnableToReadBody) -> promise.resolve(Error(t.UnableToReadBody))
+    Error(fetch.NetworkError(s)) -> promise.resolve(Error(e.NetworkError(s)))
+    Error(fetch.UnableToReadBody) -> promise.resolve(Error(e.UnableToReadBody))
     Error(fetch.InvalidJsonBody) -> panic
   }
 }
 
 fn do_follow(url) {
+  let url = uri.to_string(url)
   let frame = #(600, 700)
   let assert Ok(popup) = open(url, frame)
   receive_redirect(popup, 100)

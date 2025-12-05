@@ -1,5 +1,5 @@
 name = "midas_browser"
-version = "0.1.5"
+version = "0.2.0"
 target = "javascript"
 
 description = "Run midas tasks in the browser."
@@ -11,7 +11,7 @@ links = [{ title = "midas", href = "https://github.com/midas-framework/midas" }]
 gleam_stdlib = ">= 0.34.0 and < 2.0.0"
 gleam_fetch = ">= 1.0.1 and < 2.0.0"
 gleam_javascript = ">= 0.11.0 and < 2.0.0"
-midas = ">= 0.4.7 and < 2.0.0"
+midas = ">= 2.0.0 and < 3.0.0"
 plinth = ">= 0.4.14 and < 1.0.0"
 
 [dev-dependencies]
