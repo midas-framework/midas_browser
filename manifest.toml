@@ -21,3 +21,4 @@ gleam_stdlib = { version = ">= 0.34.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
 midas = { version = ">= 0.4.7 and < 3.0.0" }
 plinth = { version = ">= 0.4.14 and < 1.0.0" }
+snag = { version = ">= 1.2.0 and < 2.0.0" }

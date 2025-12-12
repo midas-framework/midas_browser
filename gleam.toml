@@ -1,5 +1,5 @@
 name = "midas_browser"
-version = "0.2.0"
+version = "1.0.0"
 target = "javascript"
 
 description = "Run midas tasks in the browser."
@@ -13,6 +13,7 @@ gleam_fetch = ">= 1.0.1 and < 2.0.0"
 gleam_javascript = ">= 0.11.0 and < 2.0.0"
 midas = ">= 2.0.0 and < 3.0.0"
 plinth = ">= 0.4.14 and < 1.0.0"
+snag = ">= 1.2.0 and < 2.0.0"
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
