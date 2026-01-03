@@ -6,6 +6,8 @@ import gleam/string
 import gleam/uri
 import midas/browser/zip
 import midas/effect as e
+import plinth/browser/crypto
+import plinth/browser/crypto/subtle
 import plinth/browser/window
 import plinth/javascript/global
 import snag
@@ -38,12 +40,18 @@ pub fn run(task, unsupported) {
     e.Bundle(..) -> promise.resolve(unsupported("Bundle"))
     e.ExportJsonWebKey(..) -> promise.resolve(unsupported("ExportJsonWebKey"))
     e.GenerateKeyPair(..) -> promise.resolve(unsupported("GenerateKeyPair"))
-    e.Hash(..) -> promise.resolve(unsupported("Hash"))
+    e.Hash(algorithm:, bytes:, resume:) -> {
+      use result <- promise.await(do_hash(algorithm, bytes))
+      run(resume(result), unsupported)
+    }
     e.List(..) -> promise.resolve(unsupported("List"))
     e.Read(..) -> promise.resolve(unsupported("Read"))
     e.Serve(..) -> promise.resolve(unsupported("Serve"))
     e.Sign(..) -> promise.resolve(unsupported("Sign"))
-    e.StrongRandom(..) -> promise.resolve(unsupported("StrongRandom"))
+    e.StrongRandom(length:, resume:) -> {
+      let return = do_random(length)
+      run(resume(return), unsupported)
+    }
     e.UnixNow(..) -> promise.resolve(unsupported("UnixNow"))
     e.Visit(..) -> promise.resolve(unsupported("Visit"))
     e.Write(..) -> promise.resolve(unsupported("Write"))
@@ -120,6 +128,23 @@ pub fn receive_redirect(popup, wait) {
       promise.resolve(location)
     }
     _ -> receive_redirect(popup, wait)
+  }
+}
+
+pub fn do_hash(algorithm, bytes) {
+  let algorithm = case algorithm {
+    e.Sha1 -> subtle.SHA1
+    e.Sha256 -> subtle.SHA256
+    e.Sha384 -> subtle.SHA384
+    e.Sha512 -> subtle.SHA512
+  }
+  subtle.digest(algorithm, bytes)
+}
+
+pub fn do_random(length) {
+  case window.crypto(window.self()) {
+    Ok(crypto) -> crypto.get_random_values(crypto, length)
+    Error(Nil) -> Error("window.crypo is not present")
   }
 }
 
