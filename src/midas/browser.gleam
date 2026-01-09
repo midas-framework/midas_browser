@@ -8,7 +8,9 @@ import midas/browser/zip
 import midas/effect as e
 import plinth/browser/crypto
 import plinth/browser/crypto/subtle
+import plinth/browser/location
 import plinth/browser/window
+import plinth/browser/window_proxy
 import plinth/javascript/global
 import snag
 
@@ -122,9 +124,9 @@ pub fn center(inner, outer) {
 
 pub fn receive_redirect(popup, wait) {
   use Nil <- promise.await(do_wait(wait))
-  case window.location_of(popup) {
+  case location.href(window_proxy.location(popup)) {
     Ok("http" <> _ as location) -> {
-      window.close(popup)
+      window_proxy.close(popup)
       promise.resolve(location)
     }
     _ -> receive_redirect(popup, wait)
