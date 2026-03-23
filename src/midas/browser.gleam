@@ -125,7 +125,7 @@ pub fn center(inner, outer) {
 pub fn receive_redirect(popup, wait) {
   use Nil <- promise.await(do_wait(wait))
   case location.href(window_proxy.location(popup)) {
-    Ok("http" <> _ as location) -> {
+    "http" <> _ as location -> {
       window_proxy.close(popup)
       promise.resolve(location)
     }
