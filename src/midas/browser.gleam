@@ -5,7 +5,8 @@ import gleam/javascript/promise
 import gleam/string
 import gleam/uri
 import midas/browser/zip
-import midas/effect as e
+import midas/defunctionalise as d
+import midas/effect
 import plinth/browser/crypto
 import plinth/browser/crypto/subtle
 import plinth/browser/location
@@ -20,43 +21,52 @@ pub fn run_task(task) {
 }
 
 /// Run effectful code in the browser.
-pub fn run(task, unsupported) {
+pub fn run(
+  task: d.Effect(a, key),
+  unsupported: fn(String) -> a,
+) -> promise.Promise(a) {
   case task {
-    e.Done(value) -> promise.resolve(value)
-    e.Fetch(request, resume) -> {
+    d.Done(value) -> promise.resolve(value)
+    d.Fetch(request, resume) -> {
       use return <- promise.await(do_fetch(request))
       run(resume(return), unsupported)
     }
-    e.Follow(url, resume) -> {
+    d.Follow(url, resume) -> {
       use return <- promise.await(do_follow(url))
       run(resume(uri.parse(return)), unsupported)
     }
-    e.Log(message, resume) -> {
+    d.Log(message, resume) -> {
       io.println(message)
-      run(resume(Ok(Nil)), unsupported)
+      run(resume(Nil), unsupported)
     }
-    e.Zip(files, resume) -> {
+    d.Zip(files, resume) -> {
       use zipped <- promise.await(zip.zip(files))
       run(resume(Ok(zipped)), unsupported)
     }
-    e.Bundle(..) -> promise.resolve(unsupported("Bundle"))
-    e.ExportJsonWebKey(..) -> promise.resolve(unsupported("ExportJsonWebKey"))
-    e.GenerateKeyPair(..) -> promise.resolve(unsupported("GenerateKeyPair"))
-    e.Hash(algorithm:, bytes:, resume:) -> {
+    d.Bundle(..) -> promise.resolve(unsupported("Bundle"))
+    d.ExportJsonWebKey(..) -> promise.resolve(unsupported("ExportJsonWebKey"))
+    d.GenerateKeyPair(..) -> promise.resolve(unsupported("GenerateKeyPair"))
+    d.Hash(algorithm:, bytes:, resume:) -> {
       use result <- promise.await(do_hash(algorithm, bytes))
-      run(resume(result), unsupported)
+      case result {
+        Ok(hash) -> run(resume(hash), unsupported)
+        Error(_reason) -> promise.resolve(unsupported("hash"))
+      }
     }
-    e.List(..) -> promise.resolve(unsupported("List"))
-    e.Read(..) -> promise.resolve(unsupported("Read"))
-    e.Serve(..) -> promise.resolve(unsupported("Serve"))
-    e.Sign(..) -> promise.resolve(unsupported("Sign"))
-    e.StrongRandom(length:, resume:) -> {
-      let return = do_random(length)
-      run(resume(return), unsupported)
+    d.ReadDirectory(..) -> promise.resolve(unsupported("List"))
+    d.ReadFile(..) -> promise.resolve(unsupported("Read"))
+    d.Serve(..) -> promise.resolve(unsupported("Serve"))
+    d.Sign(..) -> promise.resolve(unsupported("Sign"))
+    d.StrongRandom(length:, resume:) -> {
+      let result = do_random(length)
+      case result {
+        Ok(number) -> run(resume(number), unsupported)
+        Error(_reason) -> promise.resolve(unsupported("strong_random"))
+      }
     }
-    e.UnixNow(..) -> promise.resolve(unsupported("UnixNow"))
-    e.Visit(..) -> promise.resolve(unsupported("Visit"))
-    e.Write(..) -> promise.resolve(unsupported("Write"))
+    d.UnixNow(..) -> promise.resolve(unsupported("UnixNow"))
+    d.Visit(..) -> promise.resolve(unsupported("Visit"))
+    d.WriteFile(..) -> promise.resolve(unsupported("Write"))
   }
 }
 
@@ -68,15 +78,18 @@ pub fn do_fetch(request) {
       use response <- promise.await(fetch.read_bytes_body(response))
       let response = case response {
         Ok(response) -> Ok(response)
-        Error(fetch.NetworkError(s)) -> Error(e.NetworkError(s))
-        Error(fetch.UnableToReadBody) -> Error(e.UnableToReadBody)
-        Error(fetch.InvalidJsonBody) -> Error(e.UnableToReadBody)
+        Error(fetch.NetworkError(s)) -> Error(effect.NetworkError(s))
+        Error(fetch.UnableToReadBody) -> Error(effect.UnableToReadBody)
+        Error(fetch.InvalidJsonBody) -> Error(effect.UnableToReadBody)
       }
       promise.resolve(response)
     }
-    Error(fetch.NetworkError(s)) -> promise.resolve(Error(e.NetworkError(s)))
-    Error(fetch.UnableToReadBody) -> promise.resolve(Error(e.UnableToReadBody))
-    Error(fetch.InvalidJsonBody) -> promise.resolve(Error(e.UnableToReadBody))
+    Error(fetch.NetworkError(s)) ->
+      promise.resolve(Error(effect.NetworkError(s)))
+    Error(fetch.UnableToReadBody) ->
+      promise.resolve(Error(effect.UnableToReadBody))
+    Error(fetch.InvalidJsonBody) ->
+      promise.resolve(Error(effect.UnableToReadBody))
   }
 }
 
@@ -135,10 +148,10 @@ pub fn receive_redirect(popup, wait) {
 
 pub fn do_hash(algorithm, bytes) {
   let algorithm = case algorithm {
-    e.Sha1 -> subtle.SHA1
-    e.Sha256 -> subtle.SHA256
-    e.Sha384 -> subtle.SHA384
-    e.Sha512 -> subtle.SHA512
+    effect.Sha1 -> subtle.SHA1
+    effect.Sha256 -> subtle.SHA256
+    effect.Sha384 -> subtle.SHA384
+    effect.Sha512 -> subtle.SHA512
   }
   subtle.digest(algorithm, bytes)
 }
